@@ -7,20 +7,19 @@ app = FastAPI(title="Rate Limited API")
 
 @app.on_event("startup")
 async def startup():
-    # When the app starts, we want to make sure our database tables exist.
-    # This creates the 'rate_limit_usage' and 'blocked_users' tables if they aren't there.
+    # ensure db tables exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    # This runs for every request.
+    # runs for every request
     response = await call_next(request)
     return response
 
 @app.get("/")
 async def root():
-    # Simple welcome message to let us know the API is running.
+    # welcome message
     return {
         "message": "Welcome to the Rate Limited API. Use /secure-data with X-API-Token header."
     }
@@ -30,8 +29,7 @@ async def secure_data(
     user_id: str = Depends(get_current_user)
 ):
     """
-    This is an example of a protected endpoint.
-    Before we return the data, we ask the limiter: "Is this user allowed?"
+    protected endpoint example. checks limit before returning data.
     """
     await limiter.check_limit(user_id)
 
